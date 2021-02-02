@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Go wasm</title>
+  </head>
+
+  <body>
+    <script src="wasm_exec.js"></script>
+
+    <script>
+      if (!WebAssembly.instantiateStreaming) {
+        // polyfill
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+          const source = await (await resp).arrayBuffer();
+          return await WebAssembly.instantiate(source, importObject);
+        };
+      }
+
+      const go = new Go();
+      let mod, inst;
+      WebAssembly.instantiateStreaming(fetch("lib.wasm"), go.importObject).then(
+        async result => {
+          mod = result.module;
+          inst = result.instance;
+          await go.run(inst);
+        }
+      );
+    </script>
+    <script>
+      function callAdd() {
+        const val1El = document.getElementById('value1');
+        const val2El = document.getElementById('value2');
+        const resEl = document.getElementById('result');
+
+        const result = add(parseFloat(val1El.value), parseFloat(val2El.value));
+        resEl.value = result;
+      }
+
+      function callSubtract() {
+        const val1El = document.getElementById('value1');
+        const val2El = document.getElementById('value2');
+        const resEl = document.getElementById('result');
+
+        const result = subtract(parseFloat(val1El.value), parseFloat(val2El.value));
+        resEl.value = result;
+      }
+    </script>
+
+    <input type="text" id="value1" />
+    <input type="text" id="value2" />
+
+    <button onClick="callAdd();" id="addButton">
+      Add
+    </button>
+    <button
+      onClick="callSubtract();"
+      id="subtractButton"
+    >
+      Subtract
+    </button>
+
+    <input type="text" id="result" />
+  </body>
+</html>
